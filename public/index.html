@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Messenger Dashboard</title>
+    <style>
+        body {
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+        }
+        .header-title {
+            background-color: #1f2833;
+            color: #ffffff;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .text-center { text-align: center; font-size: 0.9rem; margin-bottom: 20px; }
+        .card {
+            background-color: #1f2833;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .command-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .command-item {
+            background-color: #111;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            border: 1px solid #333;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #111;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 5px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+        .checkbox-container input { margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-title">ZARK-BOTZ MESSENGER</div>
+    <div class="text-center">Version: 1.0.1</div>
+
+    <!-- DITO MAKIKITA ANG STATUS NG BOT -->
+    <div class="card text-center" style="border: 2px solid #2575fc;">
+        <h3 style="margin: 0;">Bot Status: <span id="botStatusDisplay">Offline 🔴</span></h3>
+    </div>
+
+    <div class="card">
+        <p>Greetings! Begin by entering your cookie. Scroll down to see other features.</p>
+        <input type="text" id="cookieInput" placeholder="Paste appstate / cookies here...">
+    </div>
+
+    <div class="card">
+        <p>Please choose your commands by tapping on the respective options.</p>
+        <button class="btn-gradient" onclick="selectAll('commands')">SELECT ALL COMMANDS</button>
+        <ul class="command-list" id="commands">
+            <li class="command-item"><input type="checkbox"> 1. accept</li>
+            <li class="command-item"><input type="checkbox"> 2. active-session</li>
+            <li class="command-item"><input type="checkbox"> 3. adduser</li>
+            <li class="command-item"><input type="checkbox"> 4. announce</li>
+            <li class="command-item"><input type="checkbox"> 5. autoreply</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <p>Please choose your event commands...</p>
+        <button class="btn-gradient" onclick="selectAll('events')">SELECT ALL EVENTS</button>
+        <ul class="command-list" id="events">
+            <li class="command-item"><input type="checkbox"> 1. antiout</li>
+            <li class="command-item"><input type="checkbox"> 2. welcome</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <p>Please provide a prefix (optional).</p>
+        <input type="text" placeholder="@, #, /, *, .">
+    </div>
+
+    <div class="card">
+        <p>Please provide an uid (optional).</p>
+        <input type="text" placeholder="Admin userID">
+    </div>
+
+    <div class="checkbox-container">
+        <input type="checkbox" id="terms">
+        <label for="terms">Checking this box certifies that I have read, understood, and agreed to the Terms and Conditions.</label>
+    </div>
+
+    <button class="btn-gradient" onclick="submitForm()">Submit</button>
+</div>
+
+<script>
+    function selectAll(listId) {
+        let checkboxes = document.querySelectorAll('#' + listId + ' input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = true);
+    }
+
+    async function submitForm() {
+        let terms = document.getElementById('terms').checked;
+        let cookieData = document.getElementById('cookieInput').value;
+
+        if (!terms) {
+            alert("Please agree to the Terms and Conditions first.");
+            return;
+        }
+        if (!cookieData) {
+            alert("Please enter your cookies or appstate.");
+            return;
+        }
+
+        document.getElementById('botStatusDisplay').innerText = "Connecting... ⏳";
+
+        // Ipapasa ang cookie papunta sa server.js
+        try {
+            await fetch('/start-bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ appState: cookieData })
+            });
+        } catch (error) {
+            alert("Hindi maka-connect sa server. Siguraduhing naka-run ang server.js mo.");
+        }
+    }
+
+    // Status Listener: Titingnan nito ang status ng bot sa server kada 3 segundo
+    setInterval(async () => {
+        try {
+            let response = await fetch('/status');
+            let data = await response.json();
+            document.getElementById('botStatusDisplay').innerText = data.status;
+        } catch (error) {
+            // Walang gagawin kung offline ang server para hindi ma-spam ang logs
+        }
+    }, 3000);
+</script>
+</body>
+  </html>
